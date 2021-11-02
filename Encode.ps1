@@ -11,6 +11,7 @@ function Encode ($dir){
 	
 	$commonParams = "-i `"$($inFile)`"","-y","-b:v $vbitrate","-b:a $abitrate",$afilters,"-ac 1",$vfilters,"-pix_fmt yuv420p","-g 300"
 	
+	# Encode an x264+aac MP4 video with abr. Nothing fancy. Needed for lame-o devices that don't support webm.
 	$encodeMp4 = {
 		param($commonParams, $outPrefix, $dir )
 		Push-Location $dir
@@ -21,6 +22,7 @@ function Encode ($dir){
 		Start-Process -wait -filepath "ffmpeg" -WindowStyle Minimized -ArgumentList ($commonParams + $mp4Params + "-pass 2" + "`"$($outPrefix).mp4`"")
 	}
 
+	# Encode vp9 webm using constrained quality. Shoots for crf target but limits to the specified bitrate.
 	$encodeVp9 = {
 		param( $commonParams, $outPrefix, $dir )
 		
@@ -32,11 +34,12 @@ function Encode ($dir){
 		Start-Process -wait -filepath "ffmpeg" -WindowStyle Minimized -ArgumentList ($commonParams + $vp9Params + "-pass 2" + "`"$($outPrefix).webm`"")
 	}
 
+	# Encode av1+opus webm using constrained quality. Shoots for crf target but limits to the specified bitrate.
 	$encodeAv1 = {
 		param( $commonParams, $outPrefix, $dir )
 		Push-Location $dir
 		$logfile = "$env:temp\ffmpeg-av1-" + (Get-Random) + ".log"
-		$av1Params = "-c:v libaom-av1","-passlogfile `"$logfile`"","-row-mt 1","-tiles 2x2","-crf 30","-threads 8"
+		$av1Params = "-c:v libaom-av1","-passlogfile `"$logfile`"","-row-mt 1","-tiles 2x2","-crf 30","-threads 8","-c:a libopus"
 		
 		Start-Process -wait -filepath "ffmpeg" -WindowStyle Minimized -ArgumentList ($commonParams + $av1Params  + "-pass 1" + "`"$($outPrefix).webm`"")
 		Start-Process -wait -filepath "ffmpeg" -WindowStyle Minimized -ArgumentList ($commonParams + $av1Params  + "-pass 2" + "`"$($outPrefix).webm`"")
